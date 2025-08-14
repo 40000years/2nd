@@ -1,23 +1,25 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: "2nd - ของมือสองคุณภาพดี",
-  description: "เว็บไซต์ขายของมือสองคุณภาพดี ราคาเป็นมิตร ปลอดภัย ไว้ใจได้",
-  keywords: "ของมือสอง, second hand, ขายของ, ซื้อของ, ราคาถูก",
-};
+  title: '2nd - ของมือสองคุณภาพดี',
+  description: 'เว็บไซต์ขายของมือสองที่เชื่อถือได้ ปลอดภัย และมีคุณภาพ',
+  keywords: 'ของมือสอง, second hand, ขายของ, ซื้อของ, ของใช้, อิเล็กทรอนิกส์, แฟชั่น, บ้าน, กีฬา',
+}
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="th">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        {children}
+      </body>
     </html>
-  );
+  )
 }

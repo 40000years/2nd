@@ -1,26 +1,28 @@
 const express = require('express');
 const router = express.Router();
-const { auth, authorize } = require('../middleware/auth');
-const { uploadMultiple, handleUploadError } = require('../middleware/upload');
-const {
-  getProducts,
-  getProduct,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-  getUserProducts
-} = require('../controllers/productController');
+
+// Simple test route first
+router.get('/test', (req, res) => {
+  res.json({ message: 'Products route working' });
+});
 
 // Public routes
-router.get('/', getProducts);
+router.get('/', (req, res) => {
+  res.json({ message: 'Get all products' });
+});
 
-// Protected routes
-router.get('/user/my-products', auth, getUserProducts);
-router.post('/', auth, authorize('seller', 'admin'), uploadMultiple, handleUploadError, createProduct);
+// Protected routes - specific routes first
+router.get('/user/my-products', (req, res) => {
+  res.json({ message: 'Get user products' });
+});
 
-// Routes with ID parameter (must be last)
-router.get('/:id', getProduct);
-router.put('/:id', auth, authorize('seller', 'admin'), uploadMultiple, handleUploadError, updateProduct);
-router.delete('/:id', auth, authorize('seller', 'admin'), deleteProduct);
+router.post('/', (req, res) => {
+  res.json({ message: 'Create product' });
+});
+
+// Generic routes with ID parameter - must be last
+router.get('/:id', (req, res) => {
+  res.json({ message: `Get product ${req.params.id}` });
+});
 
 module.exports = router; 
