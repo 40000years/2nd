@@ -809,7 +809,6 @@ app.post('/api/orders', requireBuyer, async (req, res) => {
       productId,
       quantity,
       unitPrice: product.price,
-      totalAmount: product.price * quantity,
       shippingAddress,
       paymentMethod: paymentMethod || 'pending',
       notes: notes || ''
