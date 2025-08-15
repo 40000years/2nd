@@ -1,6 +1,10 @@
 const express = require('express');
 require('dotenv').config({ path: './env.local' });
 const cors = require('cors');
+const multer = require('multer');
+const cloudinary = require('./config/cloudinary');
+const path = require('path'); // Added for serving static files
+const fs = require('fs'); // Added for local file system operations
 
 const { connectDB } = require('./config/database');
 const bcrypt = require('bcryptjs');
@@ -22,6 +26,16 @@ app.use(cors({
 
 // Middleware
 app.use(express.json());
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Import and use routes
+const authRoutes = require('./routes/auth');
+const productRoutes = require('./routes/products');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
 
 // Simple test route
 app.get('/', (req, res) => {
@@ -966,6 +980,102 @@ app.put('/api/orders/:id/payment', requireBuyer, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Internal server error'
+    });
+  }
+});
+
+// ===== IMAGE UPLOAD SYSTEM =====
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept only image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'), false);
+    }
+  }
+});
+
+// Image upload endpoint with Cloudinary
+app.post('/api/upload/image', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'ไม่พบไฟล์รูปภาพ'
+      });
+    }
+
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload_stream(
+      {
+        folder: '2nd-products',
+        transformation: [
+          { width: 800, height: 600, crop: 'fill' },
+          { quality: 'auto', fetch_format: 'auto' }
+        ]
+      },
+      (error, result) => {
+        if (error) {
+          console.error('Cloudinary upload error:', error);
+          return res.status(500).json({
+            success: false,
+            message: 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ'
+          });
+        }
+
+        res.json({
+          success: true,
+          message: 'อัปโหลดรูปภาพสำเร็จ',
+          data: {
+            imageUrl: result.secure_url,
+            publicId: result.public_id,
+            width: result.width,
+            height: result.height
+          }
+        });
+      }
+    );
+
+    // Stream the file buffer to Cloudinary
+    result.end(req.file.buffer);
+
+  } catch (error) {
+    console.error('Image upload error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ'
+    });
+  }
+});
+
+// Delete image from Cloudinary
+app.delete('/api/upload/image/:publicId', async (req, res) => {
+  try {
+    const { publicId } = req.params;
+    
+    const result = await cloudinary.uploader.destroy(publicId);
+    
+    if (result.result === 'ok') {
+      res.json({
+        success: true,
+        message: 'ลบรูปภาพสำเร็จ'
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'ไม่สามารถลบรูปภาพได้'
+      });
+    }
+  } catch (error) {
+    console.error('Delete image error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการลบรูปภาพ'
     });
   }
 });

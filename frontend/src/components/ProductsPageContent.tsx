@@ -19,7 +19,14 @@ export default function ProductsPageContent() {
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [showFilters, setShowFilters] = useState(false);
 
-  const categories = ['electronics', 'fashion', 'home', 'sports', 'books', 'other'];
+  const categories = [
+    { value: 'electronics', label: 'อิเล็กทรอนิกส์' },
+    { value: 'fashion', label: 'แฟชั่น' },
+    { value: 'home-garden', label: 'บ้านและสวน' },
+    { value: 'sports', label: 'กีฬาและสันทนาการ' },
+    { value: 'books-media', label: 'หนังสือและสื่อ' },
+    { value: 'others', label: 'อื่นๆ' }
+  ];
   const conditions = ['excellent', 'good', 'fair', 'poor'];
 
   useEffect(() => {
@@ -44,6 +51,28 @@ export default function ProductsPageContent() {
     };
 
     fetchProducts();
+
+    // Check for URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Category parameter
+    const categoryParam = urlParams.get('category');
+    if (categoryParam) {
+      // Find matching category
+      const matchingCategory = categories.find(cat => 
+        cat.label.toLowerCase().includes(categoryParam.toLowerCase()) ||
+        categoryParam.toLowerCase().includes(cat.label.toLowerCase())
+      );
+      if (matchingCategory) {
+        setSelectedCategory(matchingCategory.value);
+      }
+    }
+    
+    // Search parameter
+    const searchParam = urlParams.get('search');
+    if (searchParam) {
+      setSearchQuery(searchParam);
+    }
   }, []);
 
   useEffect(() => {
@@ -93,10 +122,10 @@ export default function ProductsPageContent() {
     const categoryMap: { [key: string]: string } = {
       'electronics': 'อิเล็กทรอนิกส์',
       'fashion': 'แฟชั่น',
-      'home': 'บ้านและสวน',
+      'home-garden': 'บ้านและสวน',
       'sports': 'กีฬาและสันทนาการ',
-      'books': 'หนังสือและสื่อ',
-      'other': 'อื่นๆ'
+      'books-media': 'หนังสือและสื่อ',
+      'others': 'อื่นๆ'
     };
     return categoryMap[category] || category;
   };
@@ -193,8 +222,8 @@ export default function ProductsPageContent() {
                   >
                     <option value="">ทุกหมวดหมู่</option>
                     {categories.map(category => (
-                      <option key={category} value={category}>
-                        {getCategoryDisplayName(category)}
+                      <option key={category.value} value={category.value}>
+                        {category.label}
                       </option>
                     ))}
                   </select>

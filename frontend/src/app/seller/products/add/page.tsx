@@ -31,10 +31,10 @@ export default function AddProductPage() {
   const categories = [
     { value: 'electronics', label: 'อิเล็กทรอนิกส์' },
     { value: 'fashion', label: 'แฟชั่น' },
-    { value: 'home', label: 'บ้านและสวน' },
+    { value: 'home-garden', label: 'บ้านและสวน' },
     { value: 'sports', label: 'กีฬาและสันทนาการ' },
-    { value: 'books', label: 'หนังสือและสื่อ' },
-    { value: 'other', label: 'อื่นๆ' }
+    { value: 'books-media', label: 'หนังสือและสื่อ' },
+    { value: 'others', label: 'อื่นๆ' }
   ];
 
   const conditions = [
@@ -60,13 +60,42 @@ export default function AddProductPage() {
     setFormData(prev => ({ ...prev, tags: prev.tags.filter(tag => tag !== tagToRemove) }));
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      // For now, we'll use placeholder URLs
-      // In a real app, you would upload to a server and get URLs back
-      const imageUrls = Array.from(files).map(file => `https://via.placeholder.com/400x300/cccccc/666666?text=${encodeURIComponent(file.name)}`);
-      setFormData(prev => ({ ...prev, images: [...prev.images, ...imageUrls] }));
+    if (!files) return;
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload/image`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to upload image');
+        }
+
+        const result = await response.json();
+        return {
+          url: result.data.imageUrl,
+          publicId: result.data.publicId
+        };
+      });
+
+      const imageResults = await Promise.all(uploadPromises);
+      const newImages = imageResults.map(img => img.url);
+      setFormData(prev => ({ ...prev, images: [...prev.images, ...newImages] }));
+    } catch (error) {
+      console.error('Image upload error:', error);
+      setError('เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ');
+    } finally {
+      setIsLoading(false);
     }
   };
 

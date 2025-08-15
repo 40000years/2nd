@@ -10,42 +10,42 @@ import { Loader2 } from 'lucide-react';
 
 const categories = [
   {
-    id: 1,
+    id: 'electronics',
     name: 'อิเล็กทรอนิกส์',
     description: 'มือถือ คอมพิวเตอร์ อุปกรณ์เสริม',
     icon: '📱',
     productCount: 0
   },
   {
-    id: 2,
+    id: 'fashion',
     name: 'แฟชั่น',
     description: 'เสื้อผ้า รองเท้า กระเป๋า',
     icon: '👗',
     productCount: 0
   },
   {
-    id: 3,
+    id: 'home-garden',
     name: 'บ้านและสวน',
     description: 'เฟอร์นิเจอร์ ของตกแต่ง',
     icon: '🏠',
     productCount: 0
   },
   {
-    id: 4,
+    id: 'sports',
     name: 'กีฬาและสันทนาการ',
     description: 'อุปกรณ์กีฬา ของเล่น',
     icon: '⚽',
     productCount: 0
   },
   {
-    id: 5,
+    id: 'books-media',
     name: 'หนังสือและสื่อ',
     description: 'หนังสือ ซีดี ดีวีดี',
     icon: '📚',
     productCount: 0
   },
   {
-    id: 6,
+    id: 'others',
     name: 'อื่นๆ',
     description: 'สินค้าอื่นๆ ที่น่าสนใจ',
     icon: '🎁',
@@ -70,9 +70,20 @@ export default function HomePageContent() {
           
           // Update category product counts
           categories.forEach(category => {
-            const count = response.data.products.filter((product: Product) => 
-              product.category.toLowerCase().includes(category.name.toLowerCase())
-            ).length;
+            const count = response.data.products.filter((product: Product) => {
+              const productCategory = product.category.toLowerCase();
+              const categoryName = category.name.toLowerCase();
+              const categoryId = category.id.toLowerCase();
+              
+              // Check if product category matches category name or ID
+              return productCategory.includes(categoryName) || 
+                     productCategory.includes(categoryId) ||
+                     (categoryId === 'electronics' && (productCategory.includes('มือถือ') || productCategory.includes('คอมพิวเตอร์'))) ||
+                     (categoryId === 'fashion' && (productCategory.includes('เสื้อ') || productCategory.includes('รองเท้า'))) ||
+                     (categoryId === 'home-garden' && (productCategory.includes('บ้าน') || productCategory.includes('เฟอร์นิเจอร์'))) ||
+                     (categoryId === 'sports' && (productCategory.includes('กีฬา') || productCategory.includes('ของเล่น'))) ||
+                     (categoryId === 'books-media' && (productCategory.includes('หนังสือ') || productCategory.includes('ซีดี')));
+            }).length;
             category.productCount = count;
           });
         } else {
@@ -162,13 +173,14 @@ export default function HomePageContent() {
 
             {products.length > 0 && (
               <div className="text-center mt-12">
-                <motion.button
+                <motion.a
+                  href="/products"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   ดูสินค้าทั้งหมด
-                </motion.button>
+                </motion.a>
               </div>
             )}
           </div>

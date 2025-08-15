@@ -92,8 +92,16 @@ const getProduct = async (req, res) => {
 // Create product
 const createProduct = async (req, res) => {
   try {
-    const { name, description, price, category, condition, images } = req.body;
+    const { name, description, price, category, condition } = req.body;
     const sellerId = req.user.id;
+
+    // Handle uploaded image
+    let images = [];
+    if (req.file) {
+      // Save image path to database
+      const imagePath = `/uploads/${req.file.filename}`;
+      images = [imagePath];
+    }
 
     const product = await Product.create({
       name,
@@ -101,7 +109,7 @@ const createProduct = async (req, res) => {
       price: parseFloat(price),
       category,
       condition,
-      images: images || [],
+      images: images,
       sellerId
     });
 

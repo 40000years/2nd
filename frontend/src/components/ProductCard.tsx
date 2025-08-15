@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Heart, ShoppingCart, MapPin, Star, Eye } from 'lucide-react';
+import { Heart, ShoppingCart, MapPin, Star, Eye, Image as ImageIcon } from 'lucide-react';
 import { Product } from '@/lib/api';
 import { useCart } from '@/contexts/CartContext';
 
@@ -14,12 +14,34 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart, isInCart } = useCart();
   const isInUserCart = isInCart(product.id);
+  const [imageError, setImageError] = useState(false);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     addToCart(product);
   };
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  const getDefaultImage = (category: string) => {
+    const categoryImages: { [key: string]: string } = {
+      'electronics': 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&h=300&fit=crop',
+      'fashion': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop',
+      'home-garden': 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop',
+      'sports': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop',
+      'books-media': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop',
+      'others': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop'
+    };
+    
+    return categoryImages[category.toLowerCase()] || categoryImages['others'];
+  };
+
+  const productImage = product.images && product.images.length > 0 && !imageError 
+    ? product.images[0] 
+    : getDefaultImage(product.category);
 
   return (
     <Link href={`/products/${product.id}`}>
@@ -29,17 +51,12 @@ export default function ProductCard({ product }: ProductCardProps) {
       >
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden">
-          {product.images && product.images.length > 0 ? (
-            <img
-              src={product.images[0]}
-              alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-400 text-sm">ไม่มีรูป</span>
-            </div>
-          )}
+          <img
+            src={productImage}
+            alt={product.name}
+            onError={handleImageError}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
           
           {/* Condition Badge */}
           <div className="absolute top-3 left-3">
@@ -117,17 +134,17 @@ export default function ProductCard({ product }: ProductCardProps) {
             <div className="flex items-center space-x-2">
               <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
                 <span className="text-xs font-medium text-gray-600">
-                  {product.seller.firstName.charAt(0)}
+                  {product.seller?.firstName?.charAt(0) || 'U'}
                 </span>
               </div>
               <span className="text-sm text-gray-600">
-                {product.seller.firstName} {product.seller.lastName}
+                {product.seller?.firstName || 'Unknown'} {product.seller?.lastName || 'User'}
               </span>
             </div>
             <div className="flex items-center space-x-1">
               <Star className="w-4 h-4 text-yellow-400 fill-current" />
               <span className="text-sm text-gray-600">
-                {product.seller.rating ? parseFloat(product.seller.rating.toString()).toFixed(1) : '0.0'}
+                {product.seller?.rating ? parseFloat(product.seller.rating.toString()).toFixed(1) : '0.0'}
               </span>
             </div>
           </div>

@@ -46,18 +46,30 @@ export default function HeroSection() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="max-w-2xl mx-auto mb-8"
           >
-            <div className="relative">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const searchInput = e.currentTarget.querySelector('input') as HTMLInputElement;
+                if (searchInput.value.trim()) {
+                  window.location.href = `/products?search=${encodeURIComponent(searchInput.value.trim())}`;
+                }
+              }}
+              className="relative"
+            >
               <input
                 type="text"
                 placeholder="ค้นหาสินค้าที่คุณต้องการ..."
                 className="w-full pl-12 pr-4 py-4 text-lg border border-gray-300 rounded-full focus:outline-none focus:ring-4 focus:ring-blue-500 focus:border-transparent shadow-lg"
               />
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400" />
-              <button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full transition-colors duration-200 flex items-center gap-2">
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full transition-colors duration-200 flex items-center gap-2"
+              >
                 ค้นหา
                 <ArrowRight className="h-4 w-4" />
               </button>
-            </div>
+            </form>
           </motion.div>
 
           {/* Stats */}
@@ -88,13 +100,19 @@ export default function HeroSection() {
             transition={{ duration: 0.8, delay: 0.8 }}
             className="flex flex-col sm:flex-row gap-4 justify-center mt-12"
           >
-            <button className="btn-primary text-lg px-8 py-3 flex items-center justify-center gap-2">
+            <a
+              href="/seller"
+              className="btn-primary text-lg px-8 py-3 flex items-center justify-center gap-2"
+            >
               เริ่มขายสินค้า
               <ArrowRight className="h-5 w-5" />
-            </button>
-            <button className="btn-secondary text-lg px-8 py-3">
+            </a>
+            <a
+              href="/products"
+              className="btn-secondary text-lg px-8 py-3"
+            >
               ดูสินค้าทั้งหมด
-            </button>
+            </a>
           </motion.div>
         </div>
       </div>

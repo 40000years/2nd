@@ -1,5 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const { 
+  getProducts, 
+  getProduct, 
+  createProduct, 
+  getUserProducts 
+} = require('../controllers/productController');
+const { uploadSingle, handleUploadError } = require('../middleware/upload');
+const { auth } = require('../middleware/auth');
 
 // Simple test route first
 router.get('/test', (req, res) => {
@@ -7,22 +15,14 @@ router.get('/test', (req, res) => {
 });
 
 // Public routes
-router.get('/', (req, res) => {
-  res.json({ message: 'Get all products' });
-});
+router.get('/', getProducts);
 
 // Protected routes - specific routes first
-router.get('/user/my-products', (req, res) => {
-  res.json({ message: 'Get user products' });
-});
+router.get('/user/my-products', auth, getUserProducts);
 
-router.post('/', (req, res) => {
-  res.json({ message: 'Create product' });
-});
+router.post('/', auth, uploadSingle, handleUploadError, createProduct);
 
 // Generic routes with ID parameter - must be last
-router.get('/:id', (req, res) => {
-  res.json({ message: `Get product ${req.params.id}` });
-});
+router.get('/:id', getProduct);
 
 module.exports = router; 

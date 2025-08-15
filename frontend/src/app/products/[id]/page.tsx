@@ -129,6 +129,19 @@ export default function ProductDetailPage() {
     return colors[condition as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
+  const getDefaultImage = (category: string) => {
+    const categoryImages: { [key: string]: string } = {
+      'electronics': 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&h=300&fit=crop',
+      'fashion': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop',
+      'home-garden': 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop',
+      'sports': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b8d8b?w=400&h=300&fit=crop',
+      'books-media': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop',
+      'others': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop'
+    };
+    
+    return categoryImages[category.toLowerCase()] || categoryImages['others'];
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -166,10 +179,18 @@ export default function ProductDetailPage() {
                   src={product.images[0]}
                   alt={product.name}
                   className="w-full h-96 object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = getDefaultImage(product.category);
+                  }}
                 />
               ) : (
                 <div className="w-full h-96 bg-gray-200 flex items-center justify-center">
-                  <Package className="w-24 h-24 text-gray-400" />
+                  <img
+                    src={getDefaultImage(product.category)}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               )}
             </div>
@@ -183,6 +204,10 @@ export default function ProductDetailPage() {
                       src={image}
                       alt={`${product.name} ${index + 1}`}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = getDefaultImage(product.category);
+                      }}
                     />
                   </div>
                 ))}

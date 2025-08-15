@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ทดสอบระบบอัปโหลดรูปภาพ</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px dashed #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .preview {
+            margin-top: 15px;
+            text-align: center;
+        }
+        .preview img {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 ทดสอบระบบอัปโหลดรูปภาพ</h1>
+        
+        <form id="uploadForm">
+            <div class="form-group">
+                <label for="name">ชื่อสินค้า *</label>
+                <input type="text" id="name" name="name" required placeholder="กรอกชื่อสินค้า">
+            </div>
+            
+            <div class="form-group">
+                <label for="description">รายละเอียดสินค้า *</label>
+                <textarea id="description" name="description" rows="4" required placeholder="กรอกรายละเอียดสินค้า"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="price">ราคา (บาท) *</label>
+                <input type="text" id="price" name="price" required placeholder="0.00">
+            </div>
+            
+            <div class="form-group">
+                <label for="category">หมวดหมู่ *</label>
+                <select id="category" name="category" required>
+                    <option value="">เลือกหมวดหมู่</option>
+                    <option value="electronics">อิเล็กทรอนิกส์</option>
+                    <option value="clothing">เสื้อผ้า</option>
+                    <option value="books">หนังสือ</option>
+                    <option value="home">บ้านและสวน</option>
+                    <option value="sports">กีฬา</option>
+                    <option value="other">อื่นๆ</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="condition">สภาพสินค้า *</label>
+                <select id="condition" name="condition" required>
+                    <option value="">เลือกสภาพสินค้า</option>
+                    <option value="excellent">ดีมาก</option>
+                    <option value="good">ดี</option>
+                    <option value="fair">ปานกลาง</option>
+                    <option value="poor">พอใช้</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="image">รูปภาพสินค้า *</label>
+                <input type="file" id="image" name="image" accept="image/*" required>
+                <div class="preview" id="imagePreview"></div>
+            </div>
+            
+            <button type="submit">📤 สร้างสินค้า</button>
+        </form>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        // Preview image before upload
+        document.getElementById('image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('imagePreview');
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.innerHTML = '';
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('name', document.getElementById('name').value);
+            formData.append('description', document.getElementById('description').value);
+            formData.append('price', document.getElementById('price').value);
+            formData.append('category', document.getElementById('category').value);
+            formData.append('condition', document.getElementById('condition').value);
+            formData.append('image', document.getElementById('image').files[0]);
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = 'กำลังอัปโหลด...';
+            
+            try {
+                // First, try to get a test token (you'll need to implement this)
+                const response = await fetch('http://localhost:5001/api/products', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Authorization': 'Bearer YOUR_TEST_TOKEN_HERE' // Replace with actual token
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ สำเร็จ!</h3>
+                        <p>${data.message}</p>
+                        <p><strong>ID:</strong> ${data.data.product.id}</p>
+                        <p><strong>ชื่อ:</strong> ${data.data.product.name}</p>
+                        <p><strong>ราคา:</strong> ${data.data.product.price} บาท</p>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ เกิดข้อผิดพลาด</h3>
+                        <p>${data.message}</p>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ เกิดข้อผิดพลาด</h3>
+                    <p>ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้</p>
+                    <p>ตรวจสอบว่าเซิร์ฟเวอร์กำลังทำงานอยู่ที่ port 5001</p>
+                    <p>Error: ${error.message}</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
