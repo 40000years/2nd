@@ -1,11 +1,11 @@
 const express = require('express');
-require('dotenv').config();
+require('dotenv').config({ path: './env.local' });
 const cors = require('cors');
 
 const { connectDB } = require('./config/database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { User, Product } = require('./models');
+const { User, Product, Order } = require('./models');
 
 const app = express();
 
@@ -53,6 +53,7 @@ app.get('/api/products', async (req, res) => {
 
     res.json({
       success: true,
+      message: 'Products retrieved successfully',
       data: { products }
     });
   } catch (error) {
@@ -90,6 +91,7 @@ app.get('/api/products/:id', async (req, res) => {
 
     res.json({
       success: true,
+      message: 'Product retrieved successfully',
       data: { product }
     });
   } catch (error) {
@@ -316,6 +318,22 @@ app.post('/api/products', requireSeller, async (req, res) => {
   try {
     const { name, description, price, originalPrice, category, condition, images, location, tags } = req.body;
     
+    // Validate required fields
+    if (!name || !description || !price || !category || !condition || !location) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณากรอกข้อมูลให้ครบถ้วน'
+      });
+    }
+
+    // Validate price
+    if (isNaN(price) || parseFloat(price) <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'ราคาต้องเป็นตัวเลขที่มากกว่า 0'
+      });
+    }
+
     const product = await Product.create({
       name,
       description,
@@ -326,6 +344,7 @@ app.post('/api/products', requireSeller, async (req, res) => {
       images: images || [],
       tags: tags || [],
       location: location || 'กรุงเทพมหานคร',
+      stock: parseInt(req.body.stock) || 1,
       sellerId: req.user.userId,
       isAvailable: true,
       isApproved: false // Products need admin approval
@@ -338,6 +357,35 @@ app.post('/api/products', requireSeller, async (req, res) => {
     });
   } catch (error) {
     console.error('Create product error:', error);
+    
+    // Handle specific database errors
+    if (error.name === 'SequelizeValidationError') {
+      const validationMessages = error.errors.map(e => {
+        if (e.path === 'description' && e.validatorKey === 'len') {
+          return 'รายละเอียดสินค้าต้องมีความยาวอย่างน้อย 5 ตัวอักษร';
+        }
+        if (e.path === 'name' && e.validatorKey === 'len') {
+          return 'ชื่อสินค้าต้องมีความยาวอย่างน้อย 3 ตัวอักษร';
+        }
+        if (e.path === 'price' && e.validatorKey === 'min') {
+          return 'ราคาต้องมากกว่า 0';
+        }
+        return `${e.path}: ${e.message}`;
+      });
+      
+      return res.status(400).json({
+        success: false,
+        message: 'ข้อมูลไม่ถูกต้อง: ' + validationMessages.join(', ')
+      });
+    }
+    
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      return res.status(400).json({
+        success: false,
+        message: 'ข้อมูลผู้ขายไม่ถูกต้อง'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -685,9 +733,265 @@ app.delete('/api/admin/products/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// ===== SHOPPING SYSTEM =====
+
+// Buyer middleware function
+const requireBuyer = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
+    const token = authHeader.substring(7);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    req.user = decoded;
+    next();
+  } catch (error) {
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token'
+      });
+    }
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token expired'
+      });
+    }
+    
+    console.error('Buyer middleware error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+// Create order (buyer only)
+app.post('/api/orders', requireBuyer, async (req, res) => {
+  try {
+    const { productId, quantity, shippingAddress, paymentMethod, notes } = req.body;
+
+    // Validate required fields
+    if (!productId || !quantity || !shippingAddress) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณากรอกข้อมูลให้ครบถ้วน'
+      });
+    }
+
+    // Check if product exists and has enough stock
+    const product = await Product.findByPk(productId);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'สินค้าไม่พบ'
+      });
+    }
+
+    if (!product.isAvailable || product.stock < quantity) {
+      return res.status(400).json({
+        success: false,
+        message: 'สินค้าไม่มีในคลังหรือไม่พร้อมขาย'
+      });
+    }
+
+    // Create order
+    const order = await Order.create({
+      buyerId: req.user.userId,
+      sellerId: product.sellerId,
+      productId,
+      quantity,
+      unitPrice: product.price,
+      totalAmount: product.price * quantity,
+      shippingAddress,
+      paymentMethod: paymentMethod || 'pending',
+      notes: notes || ''
+    });
+
+    // Update product stock
+    await product.update({
+      stock: product.stock - quantity
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'สั่งซื้อสำเร็จ',
+      data: { order }
+    });
+  } catch (error) {
+    console.error('Create order error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Get buyer orders
+app.get('/api/orders/buyer', requireBuyer, async (req, res) => {
+  try {
+    const orders = await Order.findAll({
+      where: { buyerId: req.user.userId },
+      include: [
+        {
+          model: Product,
+          as: 'product',
+          attributes: ['id', 'name', 'images', 'price']
+        },
+        {
+          model: User,
+          as: 'seller',
+          attributes: ['id', 'firstName', 'lastName']
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.json({
+      success: true,
+      message: 'Orders retrieved successfully',
+      data: { orders }
+    });
+  } catch (error) {
+    console.error('Get buyer orders error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Get seller orders
+app.get('/api/orders/seller', requireSeller, async (req, res) => {
+  try {
+    const orders = await Order.findAll({
+      where: { sellerId: req.user.userId },
+      include: [
+        {
+          model: Product,
+          as: 'product',
+          attributes: ['id', 'name', 'images', 'price']
+        },
+        {
+          model: User,
+          as: 'buyer',
+          attributes: ['id', 'firstName', 'lastName', 'email']
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.json({
+      success: true,
+      message: 'Orders retrieved successfully',
+      data: { orders }
+    });
+  } catch (error) {
+    console.error('Get seller orders error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Update order status (seller only)
+app.put('/api/orders/:id/status', requireSeller, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const order = await Order.findOne({
+      where: { id, sellerId: req.user.userId }
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found or access denied'
+      });
+    }
+
+    await order.updateStatus(status);
+
+    res.json({
+      success: true,
+      message: 'Order status updated successfully',
+      data: { order }
+    });
+  } catch (error) {
+    console.error('Update order status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Update payment status (buyer only)
+app.put('/api/orders/:id/payment', requireBuyer, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paymentStatus, paymentMethod } = req.body;
+
+    const order = await Order.findOne({
+      where: { id, buyerId: req.user.userId }
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found or access denied'
+      });
+    }
+
+    await order.update({
+      paymentStatus,
+      paymentMethod
+    });
+
+    res.json({
+      success: true,
+      message: 'Payment status updated successfully',
+      data: { order }
+    });
+  } catch (error) {
+    console.error('Update payment status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Global error handler
+app.use((error, req, res, next) => {
+  console.error('Global error handler:', error);
+  res.status(500).json({
+    success: false,
+    message: 'Internal server error'
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
+});
+
 const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌐 Health check: http://localhost:${PORT}/health`);
+  console.log(`📊 API docs: http://localhost:${PORT}/api/products`);
 }); 

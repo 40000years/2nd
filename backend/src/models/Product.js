@@ -18,7 +18,7 @@ const Product = sequelize.define('Product', {
     type: DataTypes.TEXT,
     allowNull: false,
     validate: {
-      len: [10, 2000]
+      len: [5, 2000] // ลดความยาวขั้นต่ำลงเพื่อให้เหมาะกับภาษาไทย
     }
   },
   price: {
@@ -55,6 +55,14 @@ const Product = sequelize.define('Product', {
     type: DataTypes.STRING,
     allowNull: false
   },
+  stock: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1,
+    validate: {
+      min: 0
+    }
+  },
   isAvailable: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
@@ -80,6 +88,7 @@ const Product = sequelize.define('Product', {
     }
   }
 }, {
+  timestamps: true,
   indexes: [
     {
       fields: ['category']

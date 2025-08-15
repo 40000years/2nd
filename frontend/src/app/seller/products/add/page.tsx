@@ -21,6 +21,7 @@ export default function AddProductPage() {
     category: '',
     condition: 'good',
     location: '',
+    stock: '1',
     images: [] as string[],
     tags: [] as string[]
   });
@@ -82,6 +83,10 @@ export default function AddProductPage() {
       setError('กรุณากรอกรายละเอียดสินค้า');
       return false;
     }
+    if (formData.description.trim().length < 5) {
+      setError('รายละเอียดสินค้าต้องมีความยาวอย่างน้อย 5 ตัวอักษร');
+      return false;
+    }
     if (!formData.price || parseFloat(formData.price) <= 0) {
       setError('กรุณากรอกราคาที่ถูกต้อง');
       return false;
@@ -114,6 +119,7 @@ export default function AddProductPage() {
         category: formData.category,
         condition: formData.condition,
         location: formData.location.trim(),
+        stock: parseInt(formData.stock),
         images: formData.images,
         tags: formData.tags
       };
@@ -128,9 +134,23 @@ export default function AddProductPage() {
       } else {
         setError(response.message || 'เกิดข้อผิดพลาดในการเพิ่มสินค้า');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create product:', error);
-      setError('เกิดข้อผิดพลาดในการเพิ่มสินค้า');
+      
+      // Handle different types of errors
+      if (error.message && error.message.includes('HTTP error! status: 500')) {
+        setError('เซิร์ฟเวอร์มีปัญหา กรุณาลองใหม่อีกครั้ง');
+      } else if (error.message && error.message.includes('HTTP error! status: 401')) {
+        setError('กรุณาเข้าสู่ระบบใหม่');
+        // Redirect to login
+        setTimeout(() => {
+          router.push('/auth/login');
+        }, 2000);
+      } else if (error.message && error.message.includes('HTTP error! status: 403')) {
+        setError('คุณไม่มีสิทธิ์ในการเพิ่มสินค้า กรุณาติดต่อผู้ดูแลระบบ');
+      } else {
+        setError('เกิดข้อผิดพลาดในการเพิ่มสินค้า: ' + (error.message || 'Unknown error'));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -242,8 +262,14 @@ export default function AddProductPage() {
                   required
                   rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="อธิบายรายละเอียด สภาพ และคุณสมบัติของสินค้า..."
+                  placeholder="อธิบายรายละเอียด สภาพ และคุณสมบัติของสินค้า (อย่างน้อย 5 ตัวอักษร)..."
                 />
+                <p className="mt-1 text-sm text-gray-500">
+                  ความยาว: {formData.description.length}/2000 ตัวอักษร
+                  {formData.description.length < 5 && (
+                    <span className="text-red-500 ml-2">⚠️ ต้องมีความยาวอย่างน้อย 5 ตัวอักษร</span>
+                  )}
+                </p>
               </div>
             </div>
 
@@ -330,6 +356,23 @@ export default function AddProductPage() {
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="เช่น กรุงเทพมหานคร, เชียงใหม่"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-2">
+                    จำนวนสินค้า *
+                  </label>
+                  <input
+                    type="number"
+                    id="stock"
+                    name="stock"
+                    value={formData.stock}
+                    onChange={handleInputChange}
+                    required
+                    min="1"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="1"
                   />
                 </div>
               </div>

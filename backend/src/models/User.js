@@ -80,6 +80,8 @@ const User = sequelize.define('User', {
     type: DataTypes.TEXT,
     allowNull: true
   }
+}, {
+  timestamps: true
 });
 
 // Instance method to compare password

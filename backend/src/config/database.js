@@ -1,5 +1,5 @@
 const { Sequelize } = require('sequelize');
-require('dotenv').config();
+require('dotenv').config({ path: './env.local' });
 
 const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -24,8 +24,8 @@ const connectDB = async () => {
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
     
-    // Sync all models
-    await sequelize.sync({ alter: true });
+    // Sync all models - use force: true for first run to create tables
+    await sequelize.sync({ force: false, alter: true });
     console.log('✅ Database models synchronized.');
   } catch (error) {
     console.error('❌ Unable to connect to the database:', error);

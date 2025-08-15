@@ -65,18 +65,25 @@ export default function ProductCard({ product }: ProductCardProps) {
               <Heart className="w-4 h-4 text-gray-600" />
             </motion.button>
             
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={handleAddToCart}
-              className={`w-8 h-8 rounded-full shadow-md flex items-center justify-center transition-colors ${
-                isInUserCart 
-                  ? 'bg-green-500 text-white' 
-                  : 'bg-white hover:bg-blue-50 text-gray-600'
-              }`}
-            >
-              <ShoppingCart className="w-4 h-4" />
-            </motion.button>
+            {product.stock > 0 ? (
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleAddToCart}
+                className={`w-8 h-8 rounded-full shadow-md flex items-center justify-center transition-colors ${
+                  isInUserCart 
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-white hover:bg-blue-50 text-gray-600'
+                }`}
+                title={isInUserCart ? 'อยู่ในตะกร้าแล้ว' : 'เพิ่มลงตะกร้า'}
+              >
+                <ShoppingCart className="w-4 h-4" />
+              </motion.button>
+            ) : (
+              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                <span className="text-xs font-medium text-red-600">หมด</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -125,10 +132,19 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
           </div>
 
-          {/* Location */}
-          <div className="flex items-center space-x-1 text-sm text-gray-500">
-            <MapPin className="w-4 h-4" />
-            <span>{product.location}</span>
+          {/* Location & Stock */}
+          <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
+            <div className="flex items-center space-x-1">
+              <MapPin className="w-4 h-4" />
+              <span>{product.location}</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className={`px-2 py-1 text-xs rounded-full ${
+                product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}>
+                {product.stock > 0 ? `มี ${product.stock} ชิ้น` : 'หมดแล้ว'}
+              </span>
+            </div>
           </div>
 
           {/* Tags */}

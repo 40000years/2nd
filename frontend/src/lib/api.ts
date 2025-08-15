@@ -153,7 +153,19 @@ class ApiService {
     const queryString = searchParams.toString();
     const endpoint = `/api/products${queryString ? `?${queryString}` : ''}`;
     
-    return this.request<ProductsResponse>(endpoint);
+    const response = await this.request<ProductsResponse>(endpoint);
+    
+    // Transform the response to match expected format
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: {
+          products: response.data.products || []
+        }
+      };
+    }
+    
+    return response;
   }
 
   async getProduct(id: string): Promise<ApiResponse<{ product: Product }>> {
@@ -237,6 +249,48 @@ class ApiService {
   async deleteProduct(productId: string): Promise<ApiResponse> {
     return this.request(`/api/admin/products/${productId}`, {
       method: 'DELETE',
+    });
+  }
+
+  // ===== SHOPPING SYSTEM =====
+
+  // Create order
+  async createOrder(orderData: {
+    productId: string;
+    quantity: number;
+    shippingAddress: any;
+    paymentMethod?: string;
+    notes?: string;
+  }): Promise<ApiResponse<{ order: any }>> {
+    return this.request<{ order: any }>('/api/orders', {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    });
+  }
+
+  // Get buyer orders
+  async getBuyerOrders(): Promise<ApiResponse<{ orders: any[] }>> {
+    return this.request<{ orders: any[] }>('/api/orders/buyer');
+  }
+
+  // Get seller orders
+  async getSellerOrders(): Promise<ApiResponse<{ orders: any[] }>> {
+    return this.request<{ orders: any[] }>('/api/orders/seller');
+  }
+
+  // Update order status (seller)
+  async updateOrderStatus(orderId: string, status: string): Promise<ApiResponse<{ order: any }>> {
+    return this.request<{ order: any }>(`/api/orders/${orderId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  // Update payment status (buyer)
+  async updatePaymentStatus(orderId: string, paymentStatus: string, paymentMethod?: string): Promise<ApiResponse<{ order: any }>> {
+    return this.request<{ order: any }>(`/api/orders/${orderId}/payment`, {
+      method: 'PUT',
+      body: JSON.stringify({ paymentStatus, paymentMethod }),
     });
   }
 

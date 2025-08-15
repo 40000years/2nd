@@ -85,6 +85,7 @@ const Order = sequelize.define('Order', {
   buyerRating: {
     type: DataTypes.INTEGER,
     allowNull: true,
+    defaultValue: null,
     validate: {
       min: 1,
       max: 5
@@ -92,11 +93,13 @@ const Order = sequelize.define('Order', {
   },
   buyerReview: {
     type: DataTypes.TEXT,
-    allowNull: true
+    allowNull: true,
+    defaultValue: null
   },
   sellerRating: {
     type: DataTypes.INTEGER,
     allowNull: true,
+    defaultValue: null,
     validate: {
       min: 1,
       max: 5
@@ -104,9 +107,11 @@ const Order = sequelize.define('Order', {
   },
   sellerReview: {
     type: DataTypes.TEXT,
-    allowNull: true
+    allowNull: true,
+    defaultValue: null
   }
 }, {
+  timestamps: true,
   hooks: {
     beforeCreate: async (order) => {
       // Generate order number
