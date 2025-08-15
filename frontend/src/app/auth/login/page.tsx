@@ -1,22 +1,22 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, ArrowLeft } from 'lucide-react';
-import ClientLayout from '@/components/ClientLayout';
+import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import MainLayout from '@/components/MainLayout';
 
 export default function LoginPage() {
   return (
-    <ClientLayout>
-      <LoginContent />
-    </ClientLayout>
+    <MainLayout>
+      <LoginForm />
+    </MainLayout>
   );
 }
 
-function LoginContent() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -25,15 +25,13 @@ function LoginContent() {
 
   const { login, isAuthenticated } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/';
 
   // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push(redirectTo);
-    }
-  }, [isAuthenticated, router, redirectTo]);
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     router.push(redirectTo);
+  //   }
+  // }, [isAuthenticated, router, redirectTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +41,7 @@ function LoginContent() {
     try {
       const success = await login(email, password);
       if (success) {
-        router.push(redirectTo);
+        router.push('/'); // Redirect to home after successful login
       } else {
         setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
       }
@@ -67,7 +65,7 @@ function LoginContent() {
           href="/"
           className="inline-flex items-center text-gray-600 hover:text-gray-800 mb-6 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <AlertCircle className="w-4 h-4 mr-2" />
           กลับหน้าหลัก
         </Link>
 

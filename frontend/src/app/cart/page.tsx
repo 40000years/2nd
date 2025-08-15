@@ -1,11 +1,11 @@
 import React from 'react';
-import ClientLayout from '@/components/ClientLayout';
+import MainLayout from '@/components/MainLayout';
 import CartPageContent from '@/components/CartPageContent';
 
 export default function CartPage() {
   return (
-    <ClientLayout>
+    <MainLayout>
       <CartPageContent />
-    </ClientLayout>
+    </MainLayout>
   );
 } 

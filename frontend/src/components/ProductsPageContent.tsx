@@ -1,9 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
-import Footer from '@/components/Footer';
 import { Product, apiService } from '@/lib/api';
 import { motion } from 'framer-motion';
 import { Loader2, Filter, Search, X } from 'lucide-react';
@@ -28,14 +26,18 @@ export default function ProductsPageContent() {
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
+        setError('');
+        
         const response = await apiService.getProducts();
         if (response.success && response.data) {
           setProducts(response.data.products);
           setFilteredProducts(response.data.products);
+        } else {
+          setError('ไม่สามารถโหลดสินค้าได้');
         }
       } catch (error) {
         console.error('Failed to fetch products:', error);
-        setError('ไม่สามารถโหลดสินค้าได้');
+        setError('เกิดข้อผิดพลาดในการโหลดข้อมูล');
       } finally {
         setIsLoading(false);
       }
@@ -109,10 +111,24 @@ export default function ProductsPageContent() {
     return conditionMap[condition] || condition;
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      
       <main className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Page Header */}
@@ -242,15 +258,7 @@ export default function ProductsPageContent() {
           </div>
 
           {/* Products Grid */}
-          {isLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-red-600">{error}</p>
-            </div>
-          ) : filteredProducts.length === 0 ? (
+          {filteredProducts.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-600">ไม่พบสินค้าที่ตรงกับเงื่อนไขการค้นหา</p>
               <button
@@ -276,8 +284,6 @@ export default function ProductsPageContent() {
           )}
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 } 

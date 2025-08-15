@@ -266,23 +266,69 @@ app.get('/api/auth/profile', async (req, res) => {
   }
 });
 
-// Create product (protected route)
-app.post('/api/products', async (req, res) => {
+// Seller middleware function
+const requireSeller = async (req, res, next) => {
   try {
-    const { name, description, price, category, condition, images, location } = req.body;
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
+    const token = authHeader.substring(7);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // For now, create product without authentication
-    // TODO: Add JWT verification middleware
+    if (decoded.role !== 'seller' && decoded.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Seller role required.'
+      });
+    }
+
+    req.user = decoded;
+    next();
+  } catch (error) {
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token'
+      });
+    }
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token expired'
+      });
+    }
+    
+    console.error('Seller middleware error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+// Create product (protected route for sellers)
+app.post('/api/products', requireSeller, async (req, res) => {
+  try {
+    const { name, description, price, originalPrice, category, condition, images, location, tags } = req.body;
     
     const product = await Product.create({
       name,
       description,
       price: parseFloat(price),
+      originalPrice: originalPrice ? parseFloat(originalPrice) : parseFloat(price),
       category,
       condition,
       images: images || [],
-      location: location || 'กรุงเทพมหานคร', // Default location
-      sellerId: '6e023c31-a6df-44c0-85cb-3f92d64d14b1' // Use test user ID for now
+      tags: tags || [],
+      location: location || 'กรุงเทพมหานคร',
+      sellerId: req.user.userId,
+      isAvailable: true,
+      isApproved: false // Products need admin approval
     });
 
     res.status(201).json({
@@ -292,6 +338,99 @@ app.post('/api/products', async (req, res) => {
     });
   } catch (error) {
     console.error('Create product error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Get seller's products (protected route)
+app.get('/api/products/user/my-products', requireSeller, async (req, res) => {
+  try {
+    const products = await Product.findAll({
+      where: { sellerId: req.user.userId },
+      include: [
+        {
+          model: User,
+          as: 'seller',
+          attributes: ['id', 'firstName', 'lastName', 'email']
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.json({
+      success: true,
+      message: 'Products retrieved successfully',
+      data: { products }
+    });
+  } catch (error) {
+    console.error('Get seller products error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Update seller's product (protected route)
+app.put('/api/products/:id', requireSeller, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const product = await Product.findOne({
+      where: { id, sellerId: req.user.userId }
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found or access denied'
+      });
+    }
+
+    await product.update(updateData);
+
+    res.json({
+      success: true,
+      message: 'Product updated successfully',
+      data: { product }
+    });
+  } catch (error) {
+    console.error('Update product error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Delete seller's product (protected route)
+app.delete('/api/products/:id', requireSeller, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = await Product.findOne({
+      where: { id, sellerId: req.user.userId }
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found or access denied'
+      });
+    }
+
+    await product.destroy();
+
+    res.json({
+      success: true,
+      message: 'Product deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete product error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -546,7 +685,7 @@ app.delete('/api/admin/products/:id', requireAdmin, async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

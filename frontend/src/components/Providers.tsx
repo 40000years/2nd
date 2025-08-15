@@ -4,11 +4,11 @@ import React from 'react';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 
-interface ClientLayoutProps {
+interface ProvidersProps {
   children: React.ReactNode;
 }
 
-export default function ClientLayout({ children }: ClientLayoutProps) {
+export default function Providers({ children }: ProvidersProps) {
   return (
     <AuthProvider>
       <CartProvider>
@@ -16,4 +16,4 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       </CartProvider>
     </AuthProvider>
   );
-} 
+}

@@ -1,11 +1,11 @@
 import React from 'react';
-import ClientLayout from '@/components/ClientLayout';
+import MainLayout from '@/components/MainLayout';
 import ProductsPageContent from '@/components/ProductsPageContent';
 
 export default function ProductsPage() {
   return (
-    <ClientLayout>
+    <MainLayout>
       <ProductsPageContent />
-    </ClientLayout>
+    </MainLayout>
   );
 } 

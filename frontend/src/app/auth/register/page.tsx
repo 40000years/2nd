@@ -3,20 +3,20 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, CheckCircle } from 'lucide-react';
-import ClientLayout from '@/components/ClientLayout';
+import { Eye, EyeOff, Mail, Lock, User, AlertCircle, ArrowLeft } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import MainLayout from '@/components/MainLayout';
 
 export default function RegisterPage() {
   return (
-    <ClientLayout>
-      <RegisterContent />
-    </ClientLayout>
+    <MainLayout>
+      <RegisterForm />
+    </MainLayout>
   );
 }
 
-function RegisterContent() {
+function RegisterForm() {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -91,7 +91,7 @@ function RegisterContent() {
           animate={{ opacity: 1, scale: 1 }}
           className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md w-full"
         >
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <AlertCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">สมัครสมาชิกสำเร็จ!</h1>
           <p className="text-gray-600 mb-4">กำลังเปลี่ยนเส้นทางไปยังหน้าหลัก...</p>
           <div className="w-full bg-gray-200 rounded-full h-2">

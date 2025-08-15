@@ -54,7 +54,7 @@ export default function Header() {
               สินค้าทั้งหมด
             </Link>
             {isAuthenticated && user?.role === 'seller' && (
-              <Link href="/seller/dashboard" className="text-gray-600 hover:text-gray-900 transition-colors">
+              <Link href="/seller" className="text-gray-600 hover:text-gray-900 transition-colors">
                 จัดการสินค้า
               </Link>
             )}
@@ -117,7 +117,7 @@ export default function Header() {
                     </Link>
                     {user?.role === 'seller' && (
                       <Link
-                        href="/seller/dashboard"
+                        href="/seller"
                         className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
                         onClick={() => setIsUserMenuOpen(false)}
                       >

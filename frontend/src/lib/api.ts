@@ -179,6 +179,13 @@ class ApiService {
     return this.request<{ products: Product[] }>('/api/products/user/my-products');
   }
 
+  async updateProduct(productId: string, productData: Partial<Product>): Promise<ApiResponse<{ product: Product }>> {
+    return this.request<{ product: Product }>(`/api/products/${productId}`, {
+      method: 'PUT',
+      body: JSON.stringify(productData),
+    });
+  }
+
   // Health check
   async healthCheck(): Promise<ApiResponse> {
     return this.request('/health');

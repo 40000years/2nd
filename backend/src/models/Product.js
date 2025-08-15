@@ -59,6 +59,10 @@ const Product = sequelize.define('Product', {
     type: DataTypes.BOOLEAN,
     defaultValue: true
   },
+  isApproved: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
   views: {
     type: DataTypes.INTEGER,
     defaultValue: 0

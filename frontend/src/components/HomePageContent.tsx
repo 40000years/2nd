@@ -1,11 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import CategoryCard from '@/components/CategoryCard';
 import ProductCard from '@/components/ProductCard';
-import Footer from '@/components/Footer';
 import { Product, apiService } from '@/lib/api';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
@@ -64,6 +62,8 @@ export default function HomePageContent() {
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
+        setError('');
+        
         const response = await apiService.getProducts({ limit: 8 });
         if (response.success && response.data) {
           setProducts(response.data.products);
@@ -75,10 +75,12 @@ export default function HomePageContent() {
             ).length;
             category.productCount = count;
           });
+        } else {
+          setError('ไม่สามารถโหลดสินค้าได้');
         }
       } catch (error) {
         console.error('Failed to fetch products:', error);
-        setError('ไม่สามารถโหลดสินค้าได้');
+        setError('เกิดข้อผิดพลาดในการโหลดข้อมูล');
       } finally {
         setIsLoading(false);
       }
@@ -87,10 +89,24 @@ export default function HomePageContent() {
     fetchProducts();
   }, []);
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      
       <main>
         <HeroSection />
         
@@ -125,13 +141,9 @@ export default function HomePageContent() {
               <p className="text-lg text-gray-600">สินค้าคุณภาพดีที่ได้รับความนิยม</p>
             </div>
 
-            {isLoading ? (
-              <div className="flex justify-center items-center py-12">
-                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-              </div>
-            ) : error ? (
+            {products.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-red-600">{error}</p>
+                <p className="text-gray-600">ยังไม่มีสินค้าในระบบ</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -213,8 +225,6 @@ export default function HomePageContent() {
           </div>
         </section>
       </main>
-      
-      <Footer />
     </div>
   );
 } 
